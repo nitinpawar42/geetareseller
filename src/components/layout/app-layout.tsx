@@ -12,11 +12,13 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { BarChart3, LayoutGrid, Sparkles, User, Wand2, Home } from 'lucide-react';
+import { BarChart3, LayoutGrid, Sparkles, User, Wand2, Home, ShoppingBag, Users } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const adminNavItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: BarChart3 },
+    { href: '/admin/products', label: 'Products', icon: ShoppingBag },
+    { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/optimizer', label: 'Optimizer', icon: Wand2 },
 ];
   
