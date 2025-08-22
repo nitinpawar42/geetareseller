@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +18,9 @@ import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-const users = [
-  { id: 'user_01', name: 'Jane Doe', email: 'jane.doe@example.com', role: 'reseller', status: 'Active', joined: '2023-01-15', totalEarnings: 1250.75, avatar: 'https://placehold.co/40x40.png' },
-  { id: 'user_02', name: 'John Smith', email: 'john.smith@example.com', role: 'affiliate', status: 'Active', joined: '2023-02-20', totalEarnings: 850.00, avatar: 'https://placehold.co/40x40.png' },
-  { id: 'user_03', name: 'Alice Johnson', email: 'alice.j@example.com', role: 'reseller', status: 'Pending', joined: '2023-03-10', totalEarnings: 0.00, avatar: 'https://placehold.co/40x40.png' },
-  { id: 'user_04', name: 'Robert Brown', email: 'robert.b@example.com', role: 'affiliate', status: 'Inactive', joined: '2022-11-05', totalEarnings: 2300.50, avatar: 'https://placehold.co/40x40.png' },
-  { id: 'user_05', name: 'Emily White', email: 'emily.w@example.com', role: 'reseller', status: 'Active', joined: '2023-05-01', totalEarnings: 310.25, avatar: 'https://placehold.co/40x40.png' },
-];
+import { User, getUsers } from '@/services/user-service';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 const statusVariant = {
   Active: 'default',
@@ -30,6 +29,25 @@ const statusVariant = {
 };
 
 export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        // Optionally, show a toast or error message to the user
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   return (
     <AppLayout userType="admin">
       <PageHeader title="User Management" description="View and manage all users on the platform." />
@@ -46,6 +64,7 @@ export default function UsersPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Total Earnings</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
@@ -53,49 +72,73 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                {loading ? (
+                   Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">{user.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[user.status as keyof typeof statusVariant] || 'default'} className="capitalize">
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-primary">
-                      ${user.totalEarnings.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Suspend</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                   ))
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.uid}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={user.photoURL || undefined} alt={user.fullName} />
+                            <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{user.fullName}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant[user.status as keyof typeof statusVariant] || 'default'} className="capitalize">
+                          {user.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {format(user.joined, 'PP')}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-primary">
+                        ${user.totalEarnings.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">Suspend</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
