@@ -56,6 +56,12 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
         description: '',
         imageUrl: '',
         category: '',
+        price: undefined,
+        stock: undefined,
+        weight: undefined,
+        length: undefined,
+        breadth: undefined,
+        height: undefined,
     },
   });
 
@@ -151,7 +157,7 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
                             <FormItem className="grid grid-cols-2 items-center gap-4">
                                 <FormLabel className="text-right">Price</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.01" placeholder="e.g., 99.99" {...field} />
+                                    <Input type="number" step="0.01" placeholder="e.g., 99.99" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage className="col-start-2 col-span-1" />
                             </FormItem>
@@ -164,7 +170,7 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
                             <FormItem className="grid grid-cols-2 items-center gap-4">
                                 <FormLabel className="text-right">Stock</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="e.g., 100" {...field} />
+                                    <Input type="number" placeholder="e.g., 100" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage className="col-start-2 col-span-1" />
                             </FormItem>
@@ -192,7 +198,7 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
                             <FormItem className="grid grid-cols-2 items-center gap-4">
                                 <FormLabel className="text-right">Weight (kg)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} />
+                                    <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                  <FormMessage className="col-start-2 col-span-1" />
                             </FormItem>
@@ -205,17 +211,17 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
                         <FormField
                             control={form.control}
                             name="length"
-                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Length" {...field} /></FormControl><FormMessage /></FormItem>}
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Length" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>}
                         />
                          <FormField
                             control={form.control}
                             name="breadth"
-                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Breadth" {...field} /></FormControl><FormMessage /></FormItem>}
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Breadth" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>}
                         />
                          <FormField
                             control={form.control}
                             name="height"
-                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Height" {...field} /></FormControl><FormMessage /></FormItem>}
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Height" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>}
                         />
                     </div>
                 </div>
