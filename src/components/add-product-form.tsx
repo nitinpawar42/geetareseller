@@ -1,5 +1,10 @@
+
 'use client';
 
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +18,81 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { addProduct, ProductData } from '@/services/product-service';
+import { useToast } from '@/hooks/use-toast';
 
-export function AddProductForm() {
+
+const formSchema = z.object({
+    name: z.string().min(1, 'Product name is required.'),
+    description: z.string().min(1, 'Description is required.'),
+    imageUrl: z.string().url('Please enter a valid URL.'),
+    price: z.coerce.number().positive('Price must be a positive number.'),
+    stock: z.coerce.number().int().min(0, 'Stock cannot be negative.'),
+    category: z.string().min(1, 'Category is required.'),
+    weight: z.coerce.number().positive('Weight must be a positive number.').optional(),
+    length: z.coerce.number().positive('Length must be a positive number.').optional(),
+    breadth: z.coerce.number().positive('Breadth must be a positive number.').optional(),
+    height: z.coerce.number().positive('Height must be a positive number.').optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+interface AddProductFormProps {
+    children: React.ReactNode;
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+    onProductAdded: () => void;
+}
+
+export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: AddProductFormProps) {
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+        name: '',
+        description: '',
+        imageUrl: '',
+        category: '',
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    try {
+        const productData: ProductData = {
+            ...data,
+            dimensions: {
+                length: data.length,
+                breadth: data.breadth,
+                height: data.height,
+            }
+        };
+        await addProduct(productData);
+        toast({
+            title: 'Product Added',
+            description: `${data.name} has been successfully added.`,
+        });
+        onProductAdded();
+        form.reset();
+    } catch (error) {
+        console.error('Failed to add product:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to add product. Please try again.',
+        });
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2" />
-          Add Product
-        </Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -31,69 +101,133 @@ export function AddProductForm() {
             Fill in the details to add a new product.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" placeholder="Product name" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              placeholder="Product description"
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="imageUrl" className="text-right">
-              Image URL
-            </Label>
-            <Input id="imageUrl" placeholder="https://..." className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right col-span-2">
-                Price
-                </Label>
-                <Input id="price" type="number" placeholder="e.g. 99.99" className="col-span-2" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="stock" className="text-right col-span-2">
-                Stock
-                </Label>
-                <Input id="stock" type="number" placeholder="e.g. 100" className="col-span-2" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right col-span-2">
-                Category
-                </Label>
-                <Input id="category" placeholder="e.g. Electronics" className="col-span-2" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="weight" className="text-right col-span-2">
-                Weight (kg)
-                </Label>
-                <Input id="weight" type="number" placeholder="e.g. 1.5" className="col-span-2" />
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Dimensions (cm)</Label>
-            <div className="col-span-3 grid grid-cols-3 gap-2">
-              <Input id="length" type="number" placeholder="Length" />
-              <Input id="breadth" type="number" placeholder="Breadth" />
-              <Input id="height" type="number" placeholder="Height" />
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save Product</Button>
-        </DialogFooter>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                            <FormLabel className="text-right">Name</FormLabel>
+                            <FormControl className="col-span-3">
+                                <Input placeholder="Product name" {...field} />
+                            </FormControl>
+                            <FormMessage className="col-span-1" />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem className="grid grid-cols-4 items-start gap-4">
+                            <FormLabel className="text-right pt-2">Description</FormLabel>
+                            <FormControl className="col-span-3">
+                                <Textarea placeholder="Product description" {...field} />
+                            </FormControl>
+                            <FormMessage className="col-span-1" />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                        <FormItem className="grid grid-cols-4 items-center gap-4">
+                            <FormLabel className="text-right">Image URL</FormLabel>
+                            <FormControl className="col-span-3">
+                                <Input placeholder="https://..." {...field} />
+                            </FormControl>
+                            <FormMessage className="col-span-1" />
+                        </FormItem>
+                    )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                            <FormItem className="grid grid-cols-2 items-center gap-4">
+                                <FormLabel className="text-right">Price</FormLabel>
+                                <FormControl>
+                                    <Input type="number" step="0.01" placeholder="e.g., 99.99" {...field} />
+                                </FormControl>
+                                <FormMessage className="col-start-2 col-span-1" />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="stock"
+                        render={({ field }) => (
+                            <FormItem className="grid grid-cols-2 items-center gap-4">
+                                <FormLabel className="text-right">Stock</FormLabel>
+                                <FormControl>
+                                    <Input type="number" placeholder="e.g., 100" {...field} />
+                                </FormControl>
+                                <FormMessage className="col-start-2 col-span-1" />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                             <FormItem className="grid grid-cols-2 items-center gap-4">
+                                <FormLabel className="text-right">Category</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., Electronics" {...field} />
+                                </FormControl>
+                                <FormMessage className="col-start-2 col-span-1" />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="weight"
+                        render={({ field }) => (
+                            <FormItem className="grid grid-cols-2 items-center gap-4">
+                                <FormLabel className="text-right">Weight (kg)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} />
+                                </FormControl>
+                                 <FormMessage className="col-start-2 col-span-1" />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Dimensions (cm)</Label>
+                    <div className="col-span-3 grid grid-cols-3 gap-2">
+                        <FormField
+                            control={form.control}
+                            name="length"
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Length" {...field} /></FormControl><FormMessage /></FormItem>}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="breadth"
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Breadth" {...field} /></FormControl><FormMessage /></FormItem>}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="height"
+                            render={({ field }) => <FormItem><FormControl><Input type="number" placeholder="Height" {...field} /></FormControl><FormMessage /></FormItem>}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={loading}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Product
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
