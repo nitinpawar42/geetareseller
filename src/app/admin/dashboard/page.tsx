@@ -1,3 +1,4 @@
+import AppLayout from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Percent, ShoppingBag, Users } from 'lucide-react';
@@ -23,7 +24,7 @@ const recentSales = [
 
 export default function DashboardPage() {
   return (
-    <>
+    <AppLayout userType="admin">
       <PageHeader title="Dashboard" description="Your performance summary and earnings." />
       <div className="grid gap-4 p-4 md:grid-cols-2 lg:grid-cols-4 xl:p-6">
         <StatCard title="Total Revenue" value="$45,231.89" icon={DollarSign} trend="+20.1% from last month" />
@@ -77,6 +78,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </AppLayout>
   );
 }

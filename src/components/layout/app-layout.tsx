@@ -21,7 +21,7 @@ const adminNavItems = [
 ];
   
 const resellerNavItems = [
-    { href: '/reseller', label: 'Products', icon: LayoutGrid },
+    { href: '/reseller/products', label: 'Products', icon: LayoutGrid },
 ];
 
 export default function AppLayout({ children, userType }: { children: React.ReactNode, userType: 'admin' | 'reseller' }) {
