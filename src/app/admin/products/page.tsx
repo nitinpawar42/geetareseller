@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -44,7 +43,7 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <AppLayout userType="admin">
+    <>
       <PageHeader title="Product Management" description="Add, edit, and manage all products on the platform." />
        <main className="p-4 xl:p-6">
         <Card>
@@ -135,6 +134,6 @@ export default function AdminProductsPage() {
           </CardContent>
         </Card>
        </main>
-    </AppLayout>
+    </>
   );
 }

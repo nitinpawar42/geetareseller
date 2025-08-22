@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/app-layout';
 import { PageHeader } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -49,7 +48,7 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <AppLayout userType="admin">
+    <>
       <PageHeader title="User Management" description="View and manage all users on the platform." />
        <main className="p-4 xl:p-6">
         <Card>
@@ -144,6 +143,6 @@ export default function UsersPage() {
           </CardContent>
         </Card>
        </main>
-    </AppLayout>
+    </>
   );
 }

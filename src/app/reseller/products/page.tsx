@@ -1,6 +1,5 @@
 import { ProductCard, type Product } from '@/components/product-card';
 import { PageHeader } from '@/components/layout/header';
-import AppLayout from '@/components/layout/app-layout';
 
 const products: Product[] = [
   {
@@ -61,13 +60,13 @@ const products: Product[] = [
 
 export default function ProductsPage() {
   return (
-    <AppLayout userType="reseller">
+    <>
       <PageHeader title="Discover Products" description="Browse our curated collection of products. Share them to earn commissions." />
       <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:p-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-    </AppLayout>
+    </>
   );
 }
