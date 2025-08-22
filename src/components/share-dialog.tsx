@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,8 +14,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Check, Copy, Share2, Twitter } from 'lucide-react';
+import { Check, Copy, ShoppingCart, Twitter } from 'lucide-react';
 import type { Product } from './product-card';
+import Link from 'next/link';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -61,7 +63,7 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
         <DialogHeader>
           <DialogTitle className="font-headline">Share & Earn</DialogTitle>
           <DialogDescription>
-            Share this link on social media to earn affiliate commissions.
+            Share this link on social media to earn affiliate commissions or proceed to checkout.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -90,6 +92,14 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
                 </Button>
             </div>
         </div>
+        <DialogFooter className="sm:justify-start">
+            <Button asChild className="w-full">
+                <Link href={`/checkout/${product.id}`}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Proceed to Checkout
+                </Link>
+            </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

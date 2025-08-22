@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
 
 export interface Product {
     id: string;
@@ -22,7 +22,7 @@ export interface Product {
 export type ProductData = Omit<Product, 'id' | 'sales'>;
 
 
-const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData>): Product => {
+const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): Product => {
     const data = doc.data();
     return {
         id: doc.id,
@@ -61,3 +61,19 @@ export const getProducts = async (): Promise<Product[]> => {
         throw new Error("Could not fetch products from the database.");
     }
 };
+
+export const getProduct = async (id: string): Promise<Product | null> => {
+    try {
+        const docRef = doc(db, 'products', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return productFromDoc(docSnap);
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+    } catch (e) {
+        console.error("Error getting document: ", e);
+        throw new Error("Could not fetch product from the database.");
+    }
+}
