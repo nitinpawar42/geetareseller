@@ -10,10 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
+import { AddProductForm } from '@/components/add-product-form';
 
 
 const products = [
@@ -36,10 +37,7 @@ export default function AdminProductsPage() {
                 <CardTitle>All Products</CardTitle>
                 <CardDescription>A list of all available products.</CardDescription>
               </div>
-              <Button>
-                <PlusCircle className="mr-2"/>
-                Add Product
-              </Button>
+              <AddProductForm />
             </div>
           </CardHeader>
           <CardContent>
