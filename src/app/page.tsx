@@ -1,72 +1,65 @@
-import { ProductCard, type Product } from '@/components/product-card';
-import { PageHeader } from '@/components/layout/header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldCheck, Store, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
-const products: Product[] = [
-  {
-    id: 'prod_001',
-    name: 'AcousticPro Headphones',
-    description: 'Experience crystal clear audio with our new noise-cancelling headphones.',
-    price: 199.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Electronics',
-    aiHint: 'headphones audio',
-  },
-  {
-    id: 'prod_002',
-    name: 'ErgoFlow Office Chair',
-    description: 'Stay comfortable and productive with our ergonomic office chair.',
-    price: 349.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Furniture',
-    aiHint: 'office chair',
-  },
-  {
-    id: 'prod_003',
-    name: 'Gourmet Coffee Blend',
-    description: 'Start your day with our rich and aromatic premium coffee blend.',
-    price: 24.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Groceries',
-    aiHint: 'coffee beans',
-  },
-  {
-    id: 'prod_004',
-    name: 'Classic Leather Wallet',
-    description: 'A timeless accessory, crafted from genuine leather.',
-    price: 79.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Accessories',
-    aiHint: 'leather wallet',
-  },
-  {
-    id: 'prod_005',
-    name: 'YogaFlex Mat',
-    description: 'High-grip, eco-friendly mat for your daily yoga practice.',
-    price: 49.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Sports',
-    aiHint: 'yoga mat',
-  },
-  {
-    id: 'prod_006',
-    name: 'Smart Garden Kit',
-    description: 'Grow your own herbs and vegetables indoors with ease.',
-    price: 129.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Home & Garden',
-    aiHint: 'smart garden',
-  },
-];
-
-export default function ProductsPage() {
+export default function RoleSelectionPage() {
   return (
-    <>
-      <PageHeader title="Discover Products" description="Browse our curated collection of products. Share them to earn commissions." />
-      <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:p-6">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="mb-8 text-center">
+        <div className="mb-4 inline-flex items-center gap-2">
+            <Sparkles className="size-8 text-primary" />
+            <h1 className="font-headline text-4xl font-bold">Welcome to AffiliateAce</h1>
+        </div>
+        <p className="text-lg text-muted-foreground">
+          Your one-stop shop for reselling and affiliate marketing.
+        </p>
       </div>
-    </>
+      <div className="mx-auto max-w-2xl text-center mb-10">
+        <h2 className="text-2xl font-semibold mb-4 font-headline">Choose Your Role</h2>
+        <p className="text-muted-foreground">
+          Select your role to access the appropriate dashboard and tools. Are you an administrator managing the platform, or a reseller looking to promote products?
+        </p>
+      </div>
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-8 md:grid-cols-2">
+        <Link href="/admin/dashboard">
+          <Card className="flex h-full transform flex-col text-center transition-all hover:-translate-y-1 hover:shadow-2xl">
+            <CardHeader>
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <ShieldCheck className="size-8" />
+              </div>
+              <CardTitle className="font-headline text-2xl">Administrator</CardTitle>
+              <CardDescription>
+                Manage products, view analytics, and configure platform settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow"></CardContent>
+            <div className="p-6 pt-0">
+                <Button className="w-full">Admin Dashboard</Button>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/reseller">
+          <Card className="flex h-full transform flex-col text-center transition-all hover:-translate-y-1 hover:shadow-2xl">
+            <CardHeader>
+               <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Store className="size-8" />
+              </div>
+              <CardTitle className="font-headline text-2xl">Reseller</CardTitle>
+              <CardDescription>
+                Discover products, generate affiliate links, and track your earnings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow"></CardContent>
+            <div className="p-6 pt-0">
+                <Button className="w-full">Reseller Portal</Button>
+            </div>
+          </Card>
+        </Link>
+      </div>
+       <footer className="mt-12 text-center text-sm text-muted-foreground">
+        <p>&copy; {new Date().getFullYear()} AffiliateAce. All Rights Reserved.</p>
+      </footer>
+    </div>
   );
 }

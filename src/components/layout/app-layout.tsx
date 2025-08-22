@@ -12,17 +12,22 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { BarChart3, LayoutGrid, Sparkles, User, Wand2 } from 'lucide-react';
+import { BarChart3, LayoutGrid, Sparkles, User, Wand2, Home } from 'lucide-react';
 import { Button } from '../ui/button';
 
-const navItems = [
-  { href: '/', label: 'Products', icon: LayoutGrid },
-  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
-  { href: '/optimizer', label: 'Optimizer', icon: Wand2 },
+const adminNavItems = [
+    { href: '/admin/dashboard', label: 'Dashboard', icon: BarChart3 },
+    { href: '/admin/optimizer', label: 'Optimizer', icon: Wand2 },
+];
+  
+const resellerNavItems = [
+    { href: '/reseller', label: 'Products', icon: LayoutGrid },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children, userType }: { children: React.ReactNode, userType: 'admin' | 'reseller' }) {
   const pathname = usePathname();
+  const navItems = userType === 'admin' ? adminNavItems : resellerNavItems;
+  const profileName = userType === 'admin' ? 'Admin User' : 'Jane Doe';
 
   return (
     <SidebarProvider>
@@ -35,11 +40,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
+            <SidebarMenuItem>
+                 <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/'}
+                  tooltip={{
+                    children: 'Home',
+                  }}
+                >
+                  <a href="/">
+                    <Home />
+                    <span>Home</span>
+                  </a>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={{
                     children: item.label,
                   }}
@@ -59,7 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuButton asChild tooltip={{children: 'Profile'}}>
                 <a href="#">
                   <User />
-                  <span>Jane Doe</span>
+                  <span>{profileName}</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
