@@ -40,7 +40,7 @@ export const registerReseller = async (email: string, password: string, fullName
             fullName,
             email,
             role: 'reseller',
-            status: 'Pending', 
+            status: 'Active', 
             totalEarnings: 0,
             photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${fullName.charAt(0)}`,
         };
