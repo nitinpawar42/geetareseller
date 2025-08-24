@@ -41,6 +41,12 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       const userData = await getUser(firebaseUser.uid);
 
       if (!userData) {
+        // If user exists in Auth but not in Firestore, maybe this is the first admin login.
+        if (userType === 'admin' && email === 'admin@example.com') {
+             await registerAdmin(email, password, 'Admin User');
+             router.push('/admin/dashboard');
+             return;
+        }
         throw new Error("Could not find user data. Please contact support.");
       }
 
@@ -96,7 +102,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
             type="email"
             placeholder="m@example.com"
             required
-            defaultValue={userType === 'admin' ? 'nitinpawar41@gmail.com' : 'reseller@example.com'}
+            defaultValue={userType === 'admin' ? 'admin@example.com' : 'jane.doe@example.com'}
           />
         </div>
         <div className="grid gap-2">
@@ -111,7 +117,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
               </Link>
             )}
           </div>
-          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="Nirved@12345" />
+          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="password123" />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -168,15 +174,15 @@ function AdminRegistrationForm() {
             <div className="grid gap-4">
                  <div className="grid gap-2">
                     <Label htmlFor="admin-reg-fullName">Full Name</Label>
-                    <Input id="admin-reg-fullName" name="fullName" placeholder="Admin User" required />
+                    <Input id="admin-reg-fullName" name="fullName" placeholder="Admin User" required defaultValue="Admin User"/>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="admin-reg-email">Email</Label>
-                    <Input id="admin-reg-email" name="email" type="email" placeholder="admin@example.com" required defaultValue="nitinpawar41@gmail.com" />
+                    <Input id="admin-reg-email" name="email" type="email" placeholder="admin@example.com" required defaultValue="admin@example.com" />
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="admin-reg-password">Password</Label>
-                    <Input id="admin-reg-password" name="password" type="password" required defaultValue="Nirved@12345" />
+                    <Input id="admin-reg-password" name="password" type="password" required defaultValue="password123" />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -242,7 +248,7 @@ export function LoginPage() {
                       <CardHeader>
                         <CardTitle className="font-headline">Admin Registration</CardTitle>
                         <CardDescription>
-                          Create the initial admin account.
+                          Create the initial admin account. Use this if you can't log in.
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -257,3 +263,5 @@ export function LoginPage() {
     </div>
   );
 }
+
+    

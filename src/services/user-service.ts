@@ -1,4 +1,5 @@
 
+
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp, getDoc, updateDoc } from 'firebase/firestore';
@@ -129,3 +130,5 @@ export const updateUserStatus = async (uid: string, status: User['status']): Pro
         throw new Error("Could not update user status.");
     }
 };
+
+    
