@@ -48,8 +48,8 @@ export default function ResellerRegisterPage() {
     try {
       await registerReseller(data.email, data.password, data.fullName);
       toast({
-        title: 'Registration Successful',
-        description: "You've been successfully registered. Please log in.",
+        title: 'Registration Submitted',
+        description: "Your application has been received. You will be notified once it's approved.",
       });
       router.push('/'); // Redirect to login page
     } catch (error) {
@@ -74,7 +74,7 @@ export default function ResellerRegisterPage() {
             <h1 className="font-headline text-3xl font-bold">AffiliateAce</h1>
           </div>
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-          <CardDescription>Enter your information to get started as a reseller.</CardDescription>
+          <CardDescription>Enter your information to apply as a reseller.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -120,7 +120,7 @@ export default function ResellerRegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Account
+                Apply for Account
               </Button>
             </form>
           </Form>

@@ -1,7 +1,7 @@
 
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp, getDoc, updateDoc } from 'firebase/firestore';
 import { seedUsers } from '@/services/seed-service';
 
 // Represents an admin or reseller
@@ -10,7 +10,7 @@ export interface User {
     fullName: string;
     email: string;
     role: 'reseller' | 'admin';
-    status: 'Active' | 'Pending' | 'Inactive';
+    status: 'Active' | 'Pending' | 'Inactive' | 'Suspended';
     joinedAt: Date;
     totalEarnings: number;
     photoURL?: string;
@@ -39,7 +39,7 @@ export const registerReseller = async (email: string, password: string, fullName
             fullName,
             email,
             role: 'reseller',
-            status: 'Active', 
+            status: 'Pending', 
             totalEarnings: 0,
             photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${fullName.charAt(0)}`,
         };
@@ -75,5 +75,28 @@ export const getUsers = async (): Promise<User[]> => {
     } catch (e) {
         console.error("Error getting users: ", e);
         throw new Error("Could not fetch users from the database.");
+    }
+};
+
+export const getUser = async (uid: string): Promise<User | null> => {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+            return userFromDoc(userDoc);
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        throw new Error("Could not fetch user data.");
+    }
+}
+
+export const updateUserStatus = async (uid: string, status: User['status']): Promise<void> => {
+    try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, { status });
+    } catch (error) {
+        console.error("Error updating user status:", error);
+        throw new Error("Could not update user status.");
     }
 };

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { PageHeader } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,39 +13,70 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal } from 'lucide-react';
+import { CheckCircle, MoreHorizontal, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, getUsers } from '@/services/user-service';
+import { User, getUsers, updateUserStatus } from '@/services/user-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
-const statusVariant = {
+const statusVariant: Record<User['status'], 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Active: 'default',
   Pending: 'secondary',
   Inactive: 'outline',
+  Suspended: 'destructive',
 };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const fetchedUsers = await getUsers();
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch user data.',
+       });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const fetchedUsers = await getUsers();
-        setUsers(fetchedUsers);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        // Optionally, show a toast or error message to the user
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUsers();
   }, []);
+  
+  const handleUpdateStatus = (uid: string, newStatus: User['status']) => {
+    startTransition(async () => {
+        try {
+            await updateUserStatus(uid, newStatus);
+            setUsers(prevUsers => 
+                prevUsers.map(u => u.uid === uid ? {...u, status: newStatus} : u)
+            );
+            toast({
+                title: 'Success',
+                description: `User status updated to ${newStatus}.`
+            });
+        } catch (error) {
+            console.error('Failed to update status', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to update user status.',
+            });
+        }
+    });
+  };
 
   return (
     <>
@@ -92,7 +123,7 @@ export default function UsersPage() {
                    ))
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.uid}>
+                    <TableRow key={user.uid} className={isPending ? 'opacity-50' : ''}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                           <Avatar>
@@ -109,7 +140,7 @@ export default function UsersPage() {
                         <Badge variant="outline" className="capitalize">{user.role}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant[user.status as keyof typeof statusVariant] || 'default'} className="capitalize">
+                        <Badge variant={statusVariant[user.status]} className="capitalize">
                           {user.status}
                         </Badge>
                       </TableCell>
@@ -129,9 +160,25 @@ export default function UsersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            {user.status === 'Pending' && (
+                               <DropdownMenuItem onSelect={() => handleUpdateStatus(user.uid, 'Active')}>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                    Approve
+                                </DropdownMenuItem>
+                            )}
+                             {user.status === 'Active' && (
+                                <DropdownMenuItem onSelect={() => handleUpdateStatus(user.uid, 'Suspended')} className="text-destructive">
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Suspend
+                                </DropdownMenuItem>
+                             )}
+                             {user.status === 'Suspended' && (
+                                <DropdownMenuItem onSelect={() => handleUpdateStatus(user.uid, 'Active')}>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                    Reactivate
+                                </DropdownMenuItem>
+                             )}
                             <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Suspend</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
