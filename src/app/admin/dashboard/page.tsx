@@ -14,11 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import { SalesChart } from '@/components/sales-chart';
 
 const recentSales = [
-  { id: 'sale_01', product: 'AcousticPro Headphones', customer: 'Alex D.', amount: 199.99, commission: 19.99, type: 'reseller' },
-  { id: 'sale_02', product: 'ErgoFlow Office Chair', customer: 'Ben C.', amount: 349.99, commission: 35.00, type: 'affiliate' },
-  { id: 'sale_03', product: 'Gourmet Coffee Blend', customer: 'Chloe M.', amount: 24.99, commission: 2.50, type: 'reseller' },
-  { id: 'sale_04', product: 'Classic Leather Wallet', customer: 'David F.', amount: 79.99, commission: 8.00, type: 'affiliate' },
-  { id: 'sale_05', product: 'YogaFlex Mat', customer: 'Eva G.', amount: 49.99, commission: 5.00, type: 'reseller' },
+    { id: 'sale_01', product: 'AcousticPro Headphones', customer: 'Olivia Martin', amount: 199.99, commission: 19.99, type: 'reseller' },
+    { id: 'sale_02', product: 'ErgoFlow Office Chair', customer: 'Jackson Lee', amount: 349.99, commission: 35.00, type: 'affiliate' },
+    { id: 'sale_03', product: 'Gourmet Coffee Blend', customer: 'Isabella Nguyen', amount: 24.99, commission: 2.50, type: 'reseller' },
+    { id: 'sale_04', product: 'Classic Leather Wallet', customer: 'William Kim', amount: 79.99, commission: 8.00, type: 'affiliate' },
+    { id: 'sale_05', product: 'YogaFlex Mat', customer: 'Sophia Garcia', amount: 49.99, commission: 5.00, type: 'reseller' },
 ];
 
 export default function DashboardPage() {
