@@ -1,8 +1,9 @@
 
 
+
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp, getDoc, updateDoc, query, where } from 'firebase/firestore';
 import { seedUsers } from '@/services/seed-service';
 
 // Represents an admin or reseller
@@ -94,11 +95,15 @@ export const registerAdmin = async (email: string, password: string, fullName: s
 
 export const getUsers = async (): Promise<User[]> => {
     try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('uid', '!=', 'admin-user-placeholder'));
+        const querySnapshot = await getDocs(q);
+
          if (querySnapshot.empty) {
             console.log("No users found, seeding database...");
             await seedUsers();
-            const seededSnapshot = await getDocs(collection(db, 'users'));
+            // After seeding, fetch again, excluding the placeholder admin this time.
+            const seededSnapshot = await getDocs(q);
             return seededSnapshot.docs.map(userFromDoc);
         }
         return querySnapshot.docs.map(userFromDoc);
