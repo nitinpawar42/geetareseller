@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, Copy, ShoppingCart, Twitter } from 'lucide-react';
-import type { Product } from './product-card';
+import type { Product } from '@/services/product-service';
 import Link from 'next/link';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -37,7 +37,10 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
   useEffect(() => {
     // In a real app, you'd get a unique affiliate ID for the logged-in user.
     const affiliateId = 'user123';
-    setAffiliateLink(`${window.location.origin}/checkout/${product.id}?ref=${affiliateId}`);
+    // This effect should only run on the client side
+    if (typeof window !== 'undefined') {
+      setAffiliateLink(`${window.location.origin}/checkout/${product.id}?ref=${affiliateId}`);
+    }
   }, [product.id]);
 
   const copyToClipboard = () => {

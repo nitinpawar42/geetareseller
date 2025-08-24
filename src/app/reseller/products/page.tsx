@@ -1,72 +1,61 @@
-import { ProductCard, type Product } from '@/components/product-card';
-import { PageHeader } from '@/components/layout/header';
 
-const products: Product[] = [
-  {
-    id: 'prod_001',
-    name: 'AcousticPro Headphones',
-    description: 'Experience crystal clear audio with our new noise-cancelling headphones.',
-    price: 199.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Electronics',
-    aiHint: 'headphones audio',
-  },
-  {
-    id: 'prod_002',
-    name: 'ErgoFlow Office Chair',
-    description: 'Stay comfortable and productive with our ergonomic office chair.',
-    price: 349.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Furniture',
-    aiHint: 'office chair',
-  },
-  {
-    id: 'prod_003',
-    name: 'Gourmet Coffee Blend',
-    description: 'Start your day with our rich and aromatic premium coffee blend.',
-    price: 24.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Groceries',
-    aiHint: 'coffee beans',
-  },
-  {
-    id: 'prod_004',
-    name: 'Classic Leather Wallet',
-    description: 'A timeless accessory, crafted from genuine leather.',
-    price: 79.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Accessories',
-    aiHint: 'leather wallet',
-  },
-  {
-    id: 'prod_005',
-    name: 'YogaFlex Mat',
-    description: 'High-grip, eco-friendly mat for your daily yoga practice.',
-    price: 49.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Sports',
-    aiHint: 'yoga mat',
-  },
-  {
-    id: 'prod_006',
-    name: 'Smart Garden Kit',
-    description: 'Grow your own herbs and vegetables indoors with ease.',
-    price: 129.99,
-    imageUrl: 'https://placehold.co/600x400.png',
-    category: 'Home & Garden',
-    aiHint: 'smart garden',
-  },
-];
+'use client';
+
+import { useEffect, useState } from 'react';
+import { ProductCard } from '@/components/product-card';
+import { PageHeader } from '@/components/layout/header';
+import { getProducts, Product } from '@/services/product-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const fetchedProducts = await getProducts();
+      setProducts(fetchedProducts);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <>
       <PageHeader title="Discover Products" description="Browse our curated collection of products. Share them to earn commissions." />
       <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:p-6">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+        {loading ? (
+          Array.from({ length: 6 }).map((_, index) => (
+            <Card className="flex flex-col overflow-hidden" key={index}>
+              <div className="relative aspect-video">
+                <Skeleton className="h-full w-full" />
+              </div>
+              <div className="p-6 pb-2">
+                <Skeleton className="mb-2 h-4 w-1/4" />
+                <Skeleton className="h-6 w-3/4" />
+              </div>
+              <div className="flex-grow p-6 pt-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-5/6" />
+              </div>
+              <div className="flex items-center justify-between bg-secondary/30 p-6">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-10 w-1/4" />
+              </div>
+            </Card>
+          ))
+        ) : (
+          products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        )}
       </div>
     </>
   );
 }
+
+// Dummy Card for skeleton
+const Card = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <div className={className}>{children}</div>
+);

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -6,19 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Share2 } from 'lucide-react';
 import { ShareDialog } from './share-dialog';
+import type { Product as ProductType } from '@/services/product-service';
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  category: string;
-  aiHint: string;
-}
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductType;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -38,7 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             className="object-cover"
-            data-ai-hint={product.aiHint}
+            data-ai-hint={`${product.category} ${product.name}`}
           />
         </div>
         <div className="p-6 pb-2">
