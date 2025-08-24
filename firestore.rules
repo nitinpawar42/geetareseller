@@ -3,40 +3,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check for admin role
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Products can be read by any authenticated user, but only written by admins.
+    
+    // Products: Readable by any authenticated user, writable only by admins.
     match /products/{productId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Users can read and write their own data.
+    // Users: Users can read/write their own data. Admins can read/write any user's data.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Allow admins to read all user data
-    match /users/{userId} {
-      allow read: if request.auth != null && isAdmin();
+      allow read, write: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Commissions can be created by any authenticated user, but only read by the involved reseller or an admin.
-    match /commissions/{commissionId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.resellerId);
-    }
-    
-    // Orders can be created by authenticated users.
+    // Orders & Commissions: Authenticated users can create. Reading/updating would need more specific rules.
     match /orders/{orderId} {
       allow create: if request.auth != null;
-      // Reading orders should be restricted in a real app (e.g., only by user who placed it or admin)
-      // For this demo, we'll keep it simple.
-      allow read: if request.auth != null;
+    }
+
+    match /commissions/{commissionId} {
+      allow create: if request.auth != null;
     }
   }
 }
