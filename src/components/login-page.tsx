@@ -25,6 +25,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const adminEmail = 'nitinpawar41@gmail.com';
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,16 +39,18 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
-      const userData = await getUser(firebaseUser.uid);
+      let userData = await getUser(firebaseUser.uid);
 
       if (!userData) {
         // If user exists in Auth but not in Firestore, maybe this is the first admin login.
-        if (userType === 'admin' && email === 'admin@example.com') {
+        if (userType === 'admin' && email === adminEmail) {
              await registerAdmin(email, password, 'Admin User');
-             router.push('/admin/dashboard');
-             return;
+             // Re-fetch user data after registration
+             userData = await getUser(firebaseUser.uid);
+             if (!userData) throw new Error("Failed to create admin user data.");
+        } else {
+            throw new Error("Could not find user data. Please contact support.");
         }
-        throw new Error("Could not find user data. Please contact support.");
       }
 
       // Admin Login
@@ -78,14 +81,30 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       }
     } catch (error: any) {
       console.error('Login failed:', error);
-      const errorMessage = error.code === 'auth/invalid-credential'
-        ? 'Invalid email or password.'
-        : error.message || 'An unknown error occurred.';
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: errorMessage,
-      });
+      let errorMessage = error.message || 'An unknown error occurred.';
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password.';
+      } else if (error.code === 'auth/user-not-found' && userType === 'admin' && email === adminEmail) {
+        // Special case: First admin login, user doesn't exist in Auth yet.
+        try {
+            await registerAdmin(email, password, 'Admin User');
+            toast({
+                title: 'Admin Account Created',
+                description: 'Please log in again to continue.',
+            });
+            router.push('/');
+        } catch (regError: any) {
+            errorMessage = `Failed to create admin account: ${regError.message}`;
+        }
+      }
+      
+      if (errorMessage) {
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: errorMessage,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -102,7 +121,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
             type="email"
             placeholder="m@example.com"
             required
-            defaultValue={userType === 'admin' ? 'admin@example.com' : 'jane.doe@example.com'}
+            defaultValue={userType === 'admin' ? adminEmail : 'jane.doe@example.com'}
           />
         </div>
         <div className="grid gap-2">
@@ -117,7 +136,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
               </Link>
             )}
           </div>
-          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="password123" />
+          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="Nirved@12345" />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -134,63 +153,6 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       </div>
     </form>
   );
-}
-
-function AdminRegistrationForm() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const { toast } = useToast();
-
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setLoading(true);
-
-        const formData = new FormData(event.currentTarget);
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        const fullName = formData.get('fullName') as string;
-
-        try {
-            await registerAdmin(email, password, fullName);
-            toast({
-                title: 'Admin Registered',
-                description: 'You can now log in with these credentials.',
-            });
-            // You might want to switch tabs or just let the user log in.
-            // For now, we'll just show the toast.
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Registration Failed',
-                description: error.message || 'An unknown error occurred.',
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit}>
-            <div className="grid gap-4">
-                 <div className="grid gap-2">
-                    <Label htmlFor="admin-reg-fullName">Full Name</Label>
-                    <Input id="admin-reg-fullName" name="fullName" placeholder="Admin User" required defaultValue="Admin User"/>
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="admin-reg-email">Email</Label>
-                    <Input id="admin-reg-email" name="email" type="email" placeholder="admin@example.com" required defaultValue="admin@example.com" />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="admin-reg-password">Password</Label>
-                    <Input id="admin-reg-password" name="password" type="password" required defaultValue="password123" />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Admin Account
-                </Button>
-            </div>
-        </form>
-    );
 }
 
 export function LoginPage() {
@@ -225,43 +187,20 @@ export function LoginPage() {
             </Card>
           </TabsContent>
           <TabsContent value="admin">
-            <Tabs defaultValue="login">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
-                </TabsList>
-                <TabsContent value="login">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="font-headline">Admin Login</CardTitle>
-                        <CardDescription>
-                          Manage products, users, and platform settings.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <LoginForm userType="admin" />
-                      </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="register">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="font-headline">Admin Registration</CardTitle>
-                        <CardDescription>
-                          Create the initial admin account. Use this if you can't log in.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <AdminRegistrationForm />
-                      </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+             <Card>
+                <CardHeader>
+                <CardTitle className="font-headline">Admin Login</CardTitle>
+                <CardDescription>
+                    Manage products, users, and platform settings.
+                </CardDescription>
+                </CardHeader>
+                <CardContent>
+                <LoginForm userType="admin" />
+                </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
     </div>
   );
 }
-
-    
