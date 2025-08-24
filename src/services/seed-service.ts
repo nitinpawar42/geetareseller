@@ -44,6 +44,46 @@ const sampleProducts: ProductData[] = [
     category: 'Sports',
     stock: 120,
   },
+  {
+    name: 'Starlight Smartwatch',
+    description: 'Track your fitness, notifications, and more with this sleek smartwatch.',
+    price: 249.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    category: 'Electronics',
+    stock: 90,
+  },
+  {
+    name: 'Nomad Travel Backpack',
+    description: 'Durable and spacious backpack, perfect for your next adventure.',
+    price: 129.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    category: 'Travel',
+    stock: 110,
+  },
+  {
+    name: 'AquaPure Water Bottle',
+    description: 'Stay hydrated with this insulated, stainless steel water bottle.',
+    price: 34.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    category: 'Lifestyle',
+    stock: 250,
+  },
+  {
+    name: 'RadiantGlow Skincare Set',
+    description: 'A complete set of our best-selling skincare products for a healthy glow.',
+    price: 89.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    category: 'Beauty',
+    stock: 60,
+  },
+  {
+    name: 'SoundWave Portable Speaker',
+    description: 'Compact, waterproof speaker with impressive sound for any occasion.',
+    price: 69.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    category: 'Electronics',
+    stock: 180,
+  },
 ];
 
 const sampleUsers = [
