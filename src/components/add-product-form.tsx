@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -18,16 +19,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { addProduct, ProductData } from '@/services/product-service';
+import { addProduct, ProductFormData } from '@/services/product-service';
 import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
     name: z.string().min(1, 'Product name is required.'),
     description: z.string().min(1, 'Description is required.'),
-    imageUrl: z.string().url('Please enter a valid URL.'),
+    imageFile: z.custom<FileList>().refine(file => file?.length > 0, 'Image is required.'),
     price: z.coerce.number().positive('Price must be a positive number.'),
     stock: z.coerce.number().int().min(0, 'Stock cannot be negative.'),
     category: z.string().min(1, 'Category is required.'),
@@ -48,13 +49,13 @@ interface AddProductFormProps {
 
 export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: AddProductFormProps) {
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
         name: '',
         description: '',
-        imageUrl: '',
         category: '',
         price: undefined,
         stock: undefined,
@@ -65,11 +66,25 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+              setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+      } else {
+        setImagePreview(null);
+      }
+  };
+
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-        const productData: ProductData = {
+        const productData: ProductFormData = {
             ...data,
+            imageFile: data.imageFile[0], // Get the File object from the FileList
             dimensions: {
                 length: data.length,
                 breadth: data.breadth,
@@ -83,6 +98,7 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
         });
         onProductAdded();
         form.reset();
+        setImagePreview(null);
     } catch (error) {
         console.error('Failed to add product:', error);
         toast({
@@ -137,14 +153,43 @@ export function AddProductForm({ children, isOpen, setIsOpen, onProductAdded }: 
                 />
                  <FormField
                     control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                        <FormItem className="grid grid-cols-4 items-center gap-4">
-                            <FormLabel className="text-right">Image URL</FormLabel>
+                    name="imageFile"
+                    render={({ field: { onChange, value, ...rest } }) => (
+                        <FormItem className="grid grid-cols-4 items-start gap-4">
+                            <FormLabel className="text-right pt-2">Product Image</FormLabel>
                             <FormControl className="col-span-3">
-                                <Input placeholder="https://..." {...field} />
+                                <div className="flex w-full items-center gap-4">
+                                     <div className="relative flex-1">
+                                        <Input
+                                        type="file"
+                                        accept="image/*"
+                                        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                                        onChange={(e) => {
+                                            onChange(e.target.files);
+                                            handleImageChange(e);
+                                        }}
+                                        {...rest}
+                                        />
+                                        <div className="flex h-24 w-full items-center justify-center rounded-md border-2 border-dashed border-input bg-background text-center text-muted-foreground">
+                                             <div>
+                                                <UploadCloud className="mx-auto mb-2 h-8 w-8" />
+                                                <p>Click or drag to upload</p>
+                                             </div>
+                                        </div>
+                                    </div>
+                                    {imagePreview && (
+                                        <div className="relative h-24 w-24 flex-shrink-0">
+                                            <Image
+                                                src={imagePreview}
+                                                alt="Image preview"
+                                                fill
+                                                className="rounded-md object-cover"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </FormControl>
-                            <FormMessage className="col-span-1" />
+                            <FormMessage className="col-start-2 col-span-2" />
                         </FormItem>
                     )}
                 />

@@ -1,7 +1,8 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { seedProducts } from '@/services/seed-service';
+import { uploadProductImage } from './storage-service';
 
 export interface Product {
     id: string; // Document ID
@@ -24,7 +25,9 @@ export interface Product {
     updatedAt: Date;
 }
 
-export type ProductData = Omit<Product, 'id' | 'salesCount' | 'createdAt' | 'updatedAt'>;
+export type ProductFormData = Omit<Product, 'id' | 'salesCount' | 'createdAt' | 'updatedAt' | 'imageUrl'> & {
+    imageFile: File;
+};
 
 
 const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): Product => {
@@ -45,15 +48,26 @@ const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData)
     };
 };
 
-export const addProduct = async (productData: ProductData): Promise<string> => {
+export const addProduct = async (productData: ProductFormData): Promise<string> => {
     try {
-        const docRef = await addDoc(collection(db, 'products'), {
-            ...productData,
+        // First, create a document reference with a unique ID
+        const productRef = doc(collection(db, 'products'));
+        const productId = productRef.id;
+
+        // Upload the image to Firebase Storage
+        const imageUrl = await uploadProductImage(productData.imageFile, productId);
+
+        // Create the product document in Firestore with the new image URL
+        const { imageFile, ...firestoreData } = productData;
+        
+        await addDoc(collection(db, 'products'), {
+            ...firestoreData,
+            imageUrl,
             salesCount: 0, 
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
         });
-        return docRef.id;
+        return productId;
     } catch (e) {
         console.error("Error adding document: ", e);
         throw new Error("Could not add product to the database.");
