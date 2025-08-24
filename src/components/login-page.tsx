@@ -96,7 +96,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
             type="email"
             placeholder="m@example.com"
             required
-            defaultValue={userType === 'admin' ? 'admin@example.com' : 'reseller@example.com'}
+            defaultValue={userType === 'admin' ? 'nitinpawar41@gmail.com' : 'reseller@example.com'}
           />
         </div>
         <div className="grid gap-2">
@@ -109,7 +109,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
               Forgot your password?
             </Link>
           </div>
-          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="password" />
+          <Input id={`${userType}-password`} name="password" type="password" required defaultValue="Nirved@12345" />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

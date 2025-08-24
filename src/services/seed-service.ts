@@ -47,7 +47,7 @@ const sampleProducts: ProductData[] = [
 ];
 
 const sampleUsers = [
-    { uid: 'admin-user', fullName: 'Admin User', email: 'admin@example.com', role: 'admin', status: 'Active', joinedAt: new Date(), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'admin-user', fullName: 'Nitin Pawar', email: 'nitinpawar41@gmail.com', role: 'admin', status: 'Active', joinedAt: new Date(), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
     { uid: 'reseller-jane', fullName: 'Jane Doe', email: 'jane.doe@example.com', role: 'reseller', status: 'Active', joinedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), totalEarnings: 1250.75, photoURL: 'https://placehold.co/100x100.png' },
     { uid: 'reseller-john', fullName: 'John Smith', email: 'john.smith@example.com', role: 'reseller', status: 'Active', joinedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), totalEarnings: 780.50, photoURL: 'https://placehold.co/100x100.png' },
     { uid: 'reseller-pending', fullName: 'Sam Pending', email: 'sam.pending@example.com', role: 'reseller', status: 'Pending', joinedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
