@@ -1,8 +1,7 @@
 
 
-
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp, getDoc, updateDoc, query, where } from 'firebase/firestore';
 import { seedUsers } from '@/services/seed-service';
 
@@ -66,26 +65,32 @@ export const registerReseller = async (email: string, password: string, fullName
 
 export const registerAdmin = async (email: string, password: string, fullName: string): Promise<string> => {
     try {
+        // This only works if the user is not already in Firebase Auth.
+        // For a demo, this is okay. In a real app, you'd handle this differently
+        // (e.g. by checking if the user exists first).
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        const newAdmin: Omit<User, 'uid' | 'joinedAt'> = {
+        const newAdmin: Omit<User, 'uid'> = {
             fullName,
             email,
             role: 'admin',
             status: 'Active',
+            joinedAt: new Date(),
             totalEarnings: 0,
             photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${fullName.charAt(0)}`,
         };
 
-        await setDoc(doc(db, 'users', user.uid), {
-            ...newAdmin,
-            joinedAt: new Date(),
-        });
+        await setDoc(doc(db, 'users', user.uid), newAdmin);
 
         return user.uid;
     } catch (error: any) {
+        // If email is already in use, we assume it's the admin, but the DB record is missing.
+        // We can just log the error and proceed, as the login flow will handle getting the user.
         if (error.code === 'auth/email-already-in-use') {
+            console.warn('Admin email already exists in Auth. The login flow will attempt to fetch the user data.');
+            // We can't return a UID here because we didn't create a user.
+            // The calling function will need to handle this case.
             throw new Error('This email address is already in use. You can log in with it.');
         }
         console.error("Error creating admin: ", error);
@@ -135,5 +140,3 @@ export const updateUserStatus = async (uid: string, status: User['status']): Pro
         throw new Error("Could not update user status.");
     }
 };
-
-    
