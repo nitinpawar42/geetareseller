@@ -3,35 +3,30 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
 
-    // Users can only read and write their own data
-    match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
-
-    // Products can be read by any authenticated user
-    // Products can only be created, updated, or deleted by an admin
+    // Products can be read by any authenticated user, but only written by admins.
     match /products/{productId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && isAdmin();
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
-    // Commissions can only be read by the reseller or an admin
-    match /commissions/{commissionId} {
-        allow read: if request.auth != null && (get(/databases/$(database)/documents/commissions/$(commissionId)).data.resellerId == request.auth.uid || isAdmin());
-        allow write: if request.auth != null && isAdmin();
+
+    // Users can read/write their own data. Admins can read all user data.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
-    // Orders can be created by any authenticated user
-    // Orders can only be read by the customer who created it or an admin
+
+    // Authenticated users can create orders and commissions.
     match /orders/{orderId} {
+      allow create: if request.auth != null;
+      // Allow user to view their own orders, and admins to view all.
+      allow read: if request.auth != null && (resource.data.customer.email == request.auth.token.email || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    match /commissions/{commissionId} {
         allow create: if request.auth != null;
-        allow read, update: if request.auth != null && (get(/databases/$(database)/documents/orders/$(orderId)).data.customer.uid == request.auth.uid || isAdmin());
+        // Allow resellers to view their own commissions, and admins to view all.
+        allow read: if request.auth != null && (resource.data.resellerId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
   }
 }
