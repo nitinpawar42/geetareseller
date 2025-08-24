@@ -20,13 +20,12 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getUser, registerAdmin } from '@/services/user-service';
+import { getUser } from '@/services/user-service';
 
 function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const adminEmail = 'nitinpawar41@gmail.com';
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,18 +39,10 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
-      let userData = await getUser(firebaseUser.uid);
+      const userData = await getUser(firebaseUser.uid);
 
       if (!userData) {
-        // If user exists in Auth but not in Firestore, maybe this is the first admin login.
-        if (userType === 'admin' && email === adminEmail) {
-             await registerAdmin(email, password, 'Admin User');
-             // Re-fetch user data after registration
-             userData = await getUser(firebaseUser.uid);
-             if (!userData) throw new Error("Failed to create admin user data.");
-        } else {
-            throw new Error("Could not find user data. Please contact support.");
-        }
+          throw new Error("Could not find user data. Please contact support.");
       }
 
       // Admin Login
@@ -82,30 +73,18 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       }
     } catch (error: any) {
       console.error('Login failed:', error);
-      let errorMessage = error.message || 'An unknown error occurred.';
-      if (error.code === 'auth/invalid-credential') {
+      let errorMessage = 'An unknown error occurred. Please try again.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
         errorMessage = 'Invalid email or password.';
-      } else if (error.code === 'auth/user-not-found' && userType === 'admin' && email === adminEmail) {
-        // Special case: First admin login, user doesn't exist in Auth yet.
-        try {
-            await registerAdmin(email, password, 'Admin User');
-            toast({
-                title: 'Admin Account Created',
-                description: 'Please log in again to continue.',
-            });
-            // Intentionally not redirecting, user needs to log in again.
-        } catch (regError: any) {
-            errorMessage = `Failed to create admin account: ${regError.message}`;
-        }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      if (errorMessage) {
-        toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: errorMessage,
-        });
-      }
+      toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -157,7 +136,6 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
 
 
 export function LoginPage() {
-  const router = useRouter();
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -201,8 +179,7 @@ export function LoginPage() {
                 </CardContent>
                 <CardFooter className="text-center text-xs text-muted-foreground">
                     <p>
-                        If this is the first time logging in, an admin account will be
-                        created for you. Please use the credentials specified.
+                        To create an admin account, sign up via the Reseller tab using the designated admin email.
                     </p>
                 </CardFooter>
             </Card>
