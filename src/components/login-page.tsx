@@ -7,13 +7,14 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Shield, Store, Loader2 } from 'lucide-react';
+import { Sparkles, Shield, Store, Loader2, UserPlus } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -92,7 +93,7 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
                 title: 'Admin Account Created',
                 description: 'Please log in again to continue.',
             });
-            router.push('/');
+            // Intentionally not redirecting, user needs to log in again.
         } catch (regError: any) {
             errorMessage = `Failed to create admin account: ${regError.message}`;
         }
@@ -155,7 +156,9 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
   );
 }
 
+
 export function LoginPage() {
+  const router = useRouter();
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -195,8 +198,14 @@ export function LoginPage() {
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                <LoginForm userType="admin" />
+                    <LoginForm userType="admin" />
                 </CardContent>
+                <CardFooter className="text-center text-xs text-muted-foreground">
+                    <p>
+                        If this is the first time logging in, an admin account will be
+                        created for you. Please use the credentials specified.
+                    </p>
+                </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>

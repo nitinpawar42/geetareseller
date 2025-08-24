@@ -1,4 +1,3 @@
-
 {
   "dataconnect": {
     "source": "dataconnect"
@@ -47,5 +46,10 @@
   },
   "auth": {
     "rules": "auth.rules.json"
+  },
+  "emulators": {
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData"
+    }
   }
 }
