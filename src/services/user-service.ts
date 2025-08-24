@@ -66,9 +66,11 @@ export const registerReseller = async (email: string, password: string, fullName
 
 export const registerAdmin = async (email: string, password: string, fullName: string): Promise<string> => {
     try {
+        // This will create the user in Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // This will create the user document in Firestore
         const newAdmin: Omit<User, 'uid'> = {
             fullName,
             email,
@@ -84,8 +86,8 @@ export const registerAdmin = async (email: string, password: string, fullName: s
         return user.uid;
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-             console.warn('Admin email already exists in Auth. The login flow will attempt to fetch the user data.');
-             // This is not an error in the context of the login page, which will handle it.
+             console.warn('Admin email already exists in Auth. The login flow will attempt to fetch or create the user data in Firestore.');
+             // This is not necessarily a fatal error in the login flow, so we re-throw to let the caller handle it.
              throw error;
         }
         console.error("Error creating admin: ", error);
@@ -122,23 +124,27 @@ export const getUser = async (uid: string): Promise<User | null> => {
         } else {
             // This can happen if a user was created in Auth but not in Firestore.
             // Let's create the user doc on the fly.
-            console.warn(`User document not found for UID ${uid}. Creating one.`);
+            console.warn(`User document not found for UID ${uid}. Checking Auth user.`);
             const authUser = auth.currentUser;
+
+            // Ensure the currently authenticated user is the one we're looking for
             if (authUser && authUser.uid === uid) {
                  const newUser: Omit<User, 'uid'> = {
                     fullName: authUser.displayName || 'New User',
                     email: authUser.email!,
-                    // Default to reseller, as admin creation is handled separately
+                    // Default to reseller, as admin creation is handled separately and explicitly.
                     role: authUser.email === 'nitinpawar41@gmail.com' ? 'admin' : 'reseller',
                     status: 'Active',
                     totalEarnings: 0,
                     joinedAt: new Date(),
                     photoURL: authUser.photoURL || `https://placehold.co/100x100.png?text=${(authUser.displayName || 'N').charAt(0)}`,
                 };
+                console.log(`Creating user document for ${newUser.email} with role ${newUser.role}`);
                 await setDoc(userDocRef, newUser);
                 const newUserDoc = await getDoc(userDocRef);
                 return userFromDoc(newUserDoc);
             }
+             console.log(`No authenticated user found or UID mismatch. Cannot create user document for UID ${uid}.`);
              return null;
         }
     } catch (error) {
