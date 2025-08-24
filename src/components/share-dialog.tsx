@@ -33,13 +33,11 @@ interface ShareDialogProps {
 export function ShareDialog({ product, children }: ShareDialogProps) {
   const [affiliateLink, setAffiliateLink] = useState('');
   const [hasCopied, setHasCopied] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     // In a real app, you'd get a unique affiliate ID for the logged-in user.
     const affiliateId = 'user123';
-    setAffiliateLink(`${window.location.origin}/products/${product.id}?ref=${affiliateId}`);
+    setAffiliateLink(`${window.location.origin}/checkout/${product.id}?ref=${affiliateId}`);
   }, [product.id]);
 
   const copyToClipboard = () => {
@@ -51,10 +49,6 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
   const socialShareText = `Check out this amazing product: ${product.name}! ${affiliateLink}`;
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(socialShareText)}`;
   const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(affiliateLink)}`;
-
-  if (!isClient) {
-    return <>{children}</>;
-  }
 
   return (
     <Dialog>
@@ -72,7 +66,7 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
                 <Label htmlFor="link" className="sr-only">
                 Link
                 </Label>
-                <Input id="link" defaultValue={affiliateLink} readOnly />
+                <Input id="link" value={affiliateLink} readOnly />
             </div>
             <Button type="submit" size="icon" className="px-3" onClick={copyToClipboard}>
                 <span className="sr-only">Copy</span>
@@ -94,7 +88,7 @@ export function ShareDialog({ product, children }: ShareDialogProps) {
         </div>
         <DialogFooter className="sm:justify-start">
             <Button asChild className="w-full">
-                <Link href={`/checkout/${product.id}`}>
+                <Link href={`/checkout/${product.id}?ref=user123`}>
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     Proceed to Checkout
                 </Link>
