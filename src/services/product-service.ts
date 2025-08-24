@@ -1,8 +1,10 @@
 
+'use server';
+
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 import { seedProducts } from '@/services/seed-service';
-import { uploadProductImage } from './storage-service';
+import { deleteProductImage, uploadProductImage } from './storage-service';
 
 export interface Product {
     id: string; // Document ID
@@ -29,6 +31,11 @@ export type ProductFormData = Omit<Product, 'id' | 'salesCount' | 'createdAt' | 
     imageFile: File;
 };
 
+export type EditProductFormData = Omit<Product, 'id' | 'salesCount' | 'createdAt' | 'updatedAt' | 'imageUrl'> & {
+    imageFile?: File; // Make image optional for editing
+    imageUrl: string; // Keep existing image url
+};
+
 
 const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): Product => {
     const data = doc.data();
@@ -49,18 +56,14 @@ const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData)
 };
 
 export const addProduct = async (productData: ProductFormData): Promise<string> => {
+    const productRef = doc(collection(db, 'products'));
+    const productId = productRef.id;
+
     try {
-        // First, create a document reference with a unique ID
-        const productRef = doc(collection(db, 'products'));
-        const productId = productRef.id;
-
-        // Upload the image to Firebase Storage
         const imageUrl = await uploadProductImage(productData.imageFile, productId);
-
-        // Create the product document in Firestore with the new image URL
         const { imageFile, ...firestoreData } = productData;
         
-        await addDoc(collection(db, 'products'), {
+        await setDoc(productRef, {
             ...firestoreData,
             imageUrl,
             salesCount: 0, 
@@ -70,9 +73,49 @@ export const addProduct = async (productData: ProductFormData): Promise<string> 
         return productId;
     } catch (e) {
         console.error("Error adding document: ", e);
+        // If firestore fails, delete the uploaded image
+        await deleteProductImage(productId, productData.imageFile.name).catch(err => console.error("Failed to delete orphaned image.", err));
         throw new Error("Could not add product to the database.");
     }
 };
+
+export const updateProduct = async (productId: string, productData: EditProductFormData): Promise<void> => {
+    try {
+        const productRef = doc(db, 'products', productId);
+        let imageUrl = productData.imageUrl;
+
+        // If a new image file is provided, upload it and update the URL
+        if (productData.imageFile) {
+            // In a real app, you might want to delete the old image first.
+            // For simplicity, we'll just upload the new one.
+            imageUrl = await uploadProductImage(productData.imageFile, productId);
+        }
+
+        const { imageFile, ...firestoreData } = productData;
+
+        await updateDoc(productRef, {
+            ...firestoreData,
+            imageUrl,
+            updatedAt: serverTimestamp(),
+        });
+
+    } catch (e) {
+        console.error("Error updating document: ", e);
+        throw new Error("Could not update product in the database.");
+    }
+}
+
+export const deleteProduct = async (productId: string): Promise<void> => {
+    try {
+        const productRef = doc(db, 'products', productId);
+        // In a real app, you might want to delete associated images from storage as well.
+        await deleteDoc(productRef);
+    } catch (e) {
+        console.error("Error deleting document: ", e);
+        throw new Error("Could not delete product from the database.");
+    }
+}
+
 
 export const getProducts = async (): Promise<Product[]> => {
     try {

@@ -18,13 +18,19 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import { AddProductForm } from '@/components/add-product-form';
-import { getProducts, Product } from '@/services/product-service';
+import { getProducts, Product, deleteProduct } from '@/services/product-service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EditProductForm } from '@/components/edit-product-form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddProductFormOpen, setIsAddProductFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const { toast } = useToast();
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -40,6 +46,31 @@ export default function AdminProductsPage() {
   const handleProductAdded = () => {
     fetchProducts(); // Refetch products when a new one is added
     setIsAddProductFormOpen(false); // Close the dialog
+  };
+
+  const handleProductUpdated = () => {
+    fetchProducts();
+    setEditingProduct(null);
+  }
+
+  const handleDelete = async () => {
+    if (!deletingProduct) return;
+    try {
+      await deleteProduct(deletingProduct.id);
+      toast({
+        title: 'Success',
+        description: `Product "${deletingProduct.name}" has been deleted.`,
+      });
+      fetchProducts();
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete product.',
+      });
+    } finally {
+      setDeletingProduct(null);
+    }
   };
 
   return (
@@ -120,9 +151,8 @@ export default function AdminProductsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>View Analytics</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Archive</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setEditingProduct(product)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setDeletingProduct(product)} className="text-destructive">Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -134,6 +164,35 @@ export default function AdminProductsPage() {
           </CardContent>
         </Card>
        </main>
+      
+      {/* Edit Product Dialog */}
+      {editingProduct && (
+        <EditProductForm
+          product={editingProduct}
+          isOpen={!!editingProduct}
+          setIsOpen={(isOpen) => !isOpen && setEditingProduct(null)}
+          onProductUpdated={handleProductUpdated}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingProduct} onOpenChange={(isOpen) => !isOpen && setDeletingProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product
+              "{deletingProduct?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
