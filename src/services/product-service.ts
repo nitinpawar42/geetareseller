@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp } from 'firebase/firestore';
 
 export interface Product {
     id: string;
@@ -16,10 +16,11 @@ export interface Product {
         breadth?: number;
         height?: number;
     };
-    sales: number; // Assuming sales start at 0
+    sales: number; 
+    createdAt: Date;
 }
 
-export type ProductData = Omit<Product, 'id' | 'sales'>;
+export type ProductData = Omit<Product, 'id' | 'sales' | 'createdAt'>;
 
 
 const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): Product => {
@@ -35,6 +36,7 @@ const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData)
         weight: data.weight,
         dimensions: data.dimensions,
         sales: data.sales || 0,
+        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
     };
 };
 
@@ -42,7 +44,7 @@ export const addProduct = async (productData: ProductData): Promise<string> => {
     try {
         const docRef = await addDoc(collection(db, 'products'), {
             ...productData,
-            sales: 0, // Initialize sales
+            sales: 0, 
             createdAt: new Date(),
         });
         return docRef.id;
@@ -55,6 +57,12 @@ export const addProduct = async (productData: ProductData): Promise<string> => {
 export const getProducts = async (): Promise<Product[]> => {
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
+        if (querySnapshot.empty) {
+            const { seedProducts } = await import('@/services/seed-service');
+            await seedProducts();
+            const seededSnapshot = await getDocs(collection(db, "products"));
+            return seededSnapshot.docs.map(productFromDoc);
+        }
         return querySnapshot.docs.map(productFromDoc);
     } catch (e) {
         console.error("Error getting documents: ", e);

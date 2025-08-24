@@ -1,7 +1,7 @@
 
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 
 export interface User {
     uid: string;
@@ -14,7 +14,7 @@ export interface User {
     photoURL?: string;
 }
 
-const userFromDoc = (doc: QueryDocumentSnapshot<DocumentData>): User => {
+const userFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): User => {
     const data = doc.data();
     return {
         uid: doc.id,
@@ -22,7 +22,7 @@ const userFromDoc = (doc: QueryDocumentSnapshot<DocumentData>): User => {
         email: data.email,
         role: data.role,
         status: data.status,
-        joined: data.joined.toDate(), // Convert Firestore Timestamp to Date
+        joined: (data.joined as Timestamp)?.toDate() || new Date(), // Convert Firestore Timestamp to Date
         totalEarnings: data.totalEarnings,
         photoURL: data.photoURL,
     };
@@ -33,22 +33,23 @@ export const registerReseller = async (email: string, password: string, fullName
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        const newUser: Omit<User, 'uid'> = {
+        const newUser: Omit<User, 'uid' | 'joined'> = {
             fullName,
             email,
             role: 'reseller',
-            status: 'Active', // Or 'Pending' if you want an approval process
-            joined: new Date(),
+            status: 'Active', 
             totalEarnings: 0,
             photoURL: user.photoURL || '',
         };
 
-        // Add user data to Firestore, using UID as the document ID
-        await setDoc(doc(db, 'users', user.uid), newUser);
+        
+        await setDoc(doc(db, 'users', user.uid), {
+            ...newUser,
+            joined: new Date(),
+        });
 
         return user.uid;
     } catch (error: any) {
-        // Provide more specific error messages
         if (error.code === 'auth/email-already-in-use') {
             throw new Error('This email address is already in use.');
         }
@@ -63,6 +64,12 @@ export const registerReseller = async (email: string, password: string, fullName
 export const getUsers = async (): Promise<User[]> => {
     try {
         const querySnapshot = await getDocs(collection(db, 'users'));
+         if (querySnapshot.empty) {
+            const { seedUsers } = await import('@/services/seed-service');
+            await seedUsers();
+            const seededSnapshot = await getDocs(collection(db, 'users'));
+            return seededSnapshot.docs.map(userFromDoc);
+        }
         return querySnapshot.docs.map(userFromDoc);
     } catch (e) {
         console.error("Error getting users: ", e);
