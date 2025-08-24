@@ -2,6 +2,7 @@
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, doc, setDoc, getDocs, QueryDocumentSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { seedUsers } from '@/services/seed-service';
 
 // Represents an admin or reseller
 export interface User {
@@ -66,7 +67,6 @@ export const getUsers = async (): Promise<User[]> => {
         const querySnapshot = await getDocs(collection(db, 'users'));
          if (querySnapshot.empty) {
             console.log("No users found, seeding database...");
-            const { seedUsers } = await import('@/services/seed-service');
             await seedUsers();
             const seededSnapshot = await getDocs(collection(db, 'users'));
             return seededSnapshot.docs.map(userFromDoc);

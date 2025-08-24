@@ -1,6 +1,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch } from 'firebase/firestore';
+import { seedProducts } from '@/services/seed-service';
 
 export interface Product {
     id: string; // Document ID
@@ -64,7 +65,6 @@ export const getProducts = async (): Promise<Product[]> => {
         const querySnapshot = await getDocs(collection(db, "products"));
         if (querySnapshot.empty) {
             console.log("No products found, seeding database...");
-            const { seedProducts } = await import('@/services/seed-service');
             await seedProducts();
             const seededSnapshot = await getDocs(collection(db, "products"));
             return seededSnapshot.docs.map(productFromDoc);
