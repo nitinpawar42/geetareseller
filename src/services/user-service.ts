@@ -62,6 +62,35 @@ export const registerReseller = async (email: string, password: string, fullName
     }
 };
 
+export const registerAdmin = async (email: string, password: string, fullName: string): Promise<string> => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const newAdmin: Omit<User, 'uid' | 'joinedAt'> = {
+            fullName,
+            email,
+            role: 'admin',
+            status: 'Active',
+            totalEarnings: 0,
+            photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${fullName.charAt(0)}`,
+        };
+
+        await setDoc(doc(db, 'users', user.uid), {
+            ...newAdmin,
+            joinedAt: new Date(),
+        });
+
+        return user.uid;
+    } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+            throw new Error('This email address is already in use. You can log in with it.');
+        }
+        console.error("Error creating admin: ", error);
+        throw new Error("Could not create admin account.");
+    }
+};
+
 export const getUsers = async (): Promise<User[]> => {
     try {
         const querySnapshot = await getDocs(collection(db, 'users'));

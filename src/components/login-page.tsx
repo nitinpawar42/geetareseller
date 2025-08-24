@@ -19,7 +19,7 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getUser } from '@/services/user-service';
+import { getUser, registerAdmin } from '@/services/user-service';
 
 function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
   const router = useRouter();
@@ -102,12 +102,14 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
         <div className="grid gap-2">
           <div className="flex items-center">
             <Label htmlFor={`${userType}-password`}>Password</Label>
-            <Link
-              href="/forgot-password"
-              className="ml-auto inline-block text-sm underline"
-            >
-              Forgot your password?
-            </Link>
+            {userType === 'reseller' && (
+              <Link
+                href="/forgot-password"
+                className="ml-auto inline-block text-sm underline"
+              >
+                Forgot your password?
+              </Link>
+            )}
           </div>
           <Input id={`${userType}-password`} name="password" type="password" required defaultValue="Nirved@12345" />
         </div>
@@ -126,6 +128,63 @@ function LoginForm({ userType }: { userType: 'admin' | 'reseller' }) {
       </div>
     </form>
   );
+}
+
+function AdminRegistrationForm() {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setLoading(true);
+
+        const formData = new FormData(event.currentTarget);
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+        const fullName = formData.get('fullName') as string;
+
+        try {
+            await registerAdmin(email, password, fullName);
+            toast({
+                title: 'Admin Registered',
+                description: 'You can now log in with these credentials.',
+            });
+            // You might want to switch tabs or just let the user log in.
+            // For now, we'll just show the toast.
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Registration Failed',
+                description: error.message || 'An unknown error occurred.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <div className="grid gap-4">
+                 <div className="grid gap-2">
+                    <Label htmlFor="admin-reg-fullName">Full Name</Label>
+                    <Input id="admin-reg-fullName" name="fullName" placeholder="Admin User" required />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="admin-reg-email">Email</Label>
+                    <Input id="admin-reg-email" name="email" type="email" placeholder="admin@example.com" required defaultValue="nitinpawar41@gmail.com" />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="admin-reg-password">Password</Label>
+                    <Input id="admin-reg-password" name="password" type="password" required defaultValue="Nirved@12345" />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Admin Account
+                </Button>
+            </div>
+        </form>
+    );
 }
 
 export function LoginPage() {
@@ -160,17 +219,38 @@ export function LoginPage() {
             </Card>
           </TabsContent>
           <TabsContent value="admin">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline">Admin Login</CardTitle>
-                <CardDescription>
-                  Manage products, users, and platform settings.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <LoginForm userType="admin" />
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="login">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Login</TabsTrigger>
+                    <TabsTrigger value="register">Register</TabsTrigger>
+                </TabsList>
+                <TabsContent value="login">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="font-headline">Admin Login</CardTitle>
+                        <CardDescription>
+                          Manage products, users, and platform settings.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <LoginForm userType="admin" />
+                      </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="register">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="font-headline">Admin Registration</CardTitle>
+                        <CardDescription>
+                          Create the initial admin account.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <AdminRegistrationForm />
+                      </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
