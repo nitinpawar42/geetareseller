@@ -39,10 +39,12 @@ export const registerReseller = async (email: string, password: string, fullName
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        const isAdmin = email.toLowerCase() === 'nitinpawar41@gmail.com';
+
         const newUser: Omit<User, 'uid'> = {
             fullName,
             email,
-            role: 'reseller',
+            role: isAdmin ? 'admin' : 'reseller',
             status: 'Active', 
             totalEarnings: 0,
             photoURL: user.photoURL || `https://placehold.co/100x100.png?text=${fullName.charAt(0)}`,
