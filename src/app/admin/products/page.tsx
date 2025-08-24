@@ -58,7 +58,7 @@ export default function AdminProductsPage() {
                 setIsOpen={setIsAddProductFormOpen}
                 onProductAdded={handleProductAdded}
               >
-                 <Button>
+                 <Button onClick={() => setIsAddProductFormOpen(true)}>
                     <PlusCircle className="mr-2" />
                     Add Product
                 </Button>

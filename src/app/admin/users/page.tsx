@@ -114,7 +114,7 @@ export default function UsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {format(user.joined, 'PP')}
+                        {format(user.joinedAt, 'PP')}
                       </TableCell>
                       <TableCell className="text-right font-medium text-primary">
                         ${user.totalEarnings.toFixed(2)}

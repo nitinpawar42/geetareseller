@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import type { ProductData } from './product-service';
 
 const sampleProducts: ProductData[] = [
@@ -47,32 +47,41 @@ const sampleProducts: ProductData[] = [
 ];
 
 const sampleUsers = [
-    { uid: 'admin-user', fullName: 'Admin User', email: 'admin@example.com', role: 'admin', status: 'Active', joined: new Date(), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
-    { uid: 'reseller-jane', fullName: 'Jane Doe', email: 'jane.doe@example.com', role: 'reseller', status: 'Active', joined: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), totalEarnings: 1250.75, photoURL: 'https://placehold.co/100x100.png' },
-    { uid: 'reseller-john', fullName: 'John Smith', email: 'john.smith@example.com', role: 'reseller', status: 'Active', joined: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), totalEarnings: 780.50, photoURL: 'https://placehold.co/100x100.png' },
-    { uid: 'reseller-pending', fullName: 'Sam Pending', email: 'sam.pending@example.com', role: 'reseller', status: 'Pending', joined: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
-    { uid: 'reseller-inactive', fullName: 'Inactive Irma', email: 'irma.inactive@example.com', role: 'reseller', status: 'Inactive', joined: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), totalEarnings: 25.00, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'admin-user', fullName: 'Admin User', email: 'admin@example.com', role: 'admin', status: 'Active', joinedAt: new Date(), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'reseller-jane', fullName: 'Jane Doe', email: 'jane.doe@example.com', role: 'reseller', status: 'Active', joinedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), totalEarnings: 1250.75, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'reseller-john', fullName: 'John Smith', email: 'john.smith@example.com', role: 'reseller', status: 'Active', joinedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), totalEarnings: 780.50, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'reseller-pending', fullName: 'Sam Pending', email: 'sam.pending@example.com', role: 'reseller', status: 'Pending', joinedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), totalEarnings: 0, photoURL: 'https://placehold.co/100x100.png' },
+    { uid: 'reseller-inactive', fullName: 'Inactive Irma', email: 'irma.inactive@example.com', role: 'reseller', status: 'Inactive', joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), totalEarnings: 25.00, photoURL: 'https://placehold.co/100x100.png' },
 ];
 
 
 export const seedProducts = async () => {
+    const batch = writeBatch(db);
     console.log("Seeding products...");
-    const productPromises = sampleProducts.map(product =>
-        addDoc(collection(db, 'products'), {
+    
+    sampleProducts.forEach(product => {
+        const docRef = doc(collection(db, 'products'));
+        batch.set(docRef, {
             ...product,
-            sales: Math.floor(Math.random() * 500),
+            salesCount: Math.floor(Math.random() * 500),
             createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-        })
-    );
-    await Promise.all(productPromises);
+            updatedAt: new Date()
+        });
+    });
+
+    await batch.commit();
     console.log("Product seeding complete.");
 };
 
 export const seedUsers = async () => {
+    const batch = writeBatch(db);
     console.log("Seeding users...");
-    const userPromises = sampleUsers.map(user => 
-        setDoc(doc(db, "users", user.uid), user)
-    );
-    await Promise.all(userPromises);
+
+    sampleUsers.forEach(user => {
+        const docRef = doc(db, "users", user.uid);
+        batch.set(docRef, user);
+    });
+
+    await batch.commit();
     console.log("User seeding complete.");
-}
+};

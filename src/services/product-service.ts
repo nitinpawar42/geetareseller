@@ -1,26 +1,29 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, DocumentData, QueryDocumentSnapshot, getDoc, Timestamp, writeBatch } from 'firebase/firestore';
 
 export interface Product {
-    id: string;
+    id: string; // Document ID
     name: string;
     description: string;
     imageUrl: string;
     price: number;
-    stock: number;
     category: string;
-    weight?: number;
+    stock: number;
+    // Optional details
+    weight?: number; // in kg
     dimensions?: {
-        length?: number;
-        breadth?: number;
-        height?: number;
+        length?: number; // in cm
+        breadth?: number; // in cm
+        height?: number; // in cm
     };
-    sales: number; 
+    // Tracking fields
+    salesCount: number; 
     createdAt: Date;
+    updatedAt: Date;
 }
 
-export type ProductData = Omit<Product, 'id' | 'sales' | 'createdAt'>;
+export type ProductData = Omit<Product, 'id' | 'salesCount' | 'createdAt' | 'updatedAt'>;
 
 
 const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData): Product => {
@@ -35,8 +38,9 @@ const productFromDoc = (doc: QueryDocumentSnapshot<DocumentData> | DocumentData)
         category: data.category,
         weight: data.weight,
         dimensions: data.dimensions,
-        sales: data.sales || 0,
+        salesCount: data.salesCount || 0,
         createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
     };
 };
 
@@ -44,8 +48,9 @@ export const addProduct = async (productData: ProductData): Promise<string> => {
     try {
         const docRef = await addDoc(collection(db, 'products'), {
             ...productData,
-            sales: 0, 
+            salesCount: 0, 
             createdAt: new Date(),
+            updatedAt: new Date(),
         });
         return docRef.id;
     } catch (e) {
@@ -58,6 +63,7 @@ export const getProducts = async (): Promise<Product[]> => {
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         if (querySnapshot.empty) {
+            console.log("No products found, seeding database...");
             const { seedProducts } = await import('@/services/seed-service');
             await seedProducts();
             const seededSnapshot = await getDocs(collection(db, "products"));
